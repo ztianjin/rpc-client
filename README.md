@@ -111,18 +111,80 @@ through it are dispatched in a round-robin manner to the given
 
 # Health checking and exception handling
 
-By default, any exception thrown during a call is interepreted as
-indicative of an unhealthy server (that is, it is counted as a
-failure). However, exceptions can sometimes have different meanings:
-for example exceptions sometimes indicate an application error and
-should not be taken to indicate a node failure. To modify the
-interpretation of exceptions, define `unwrapException` in the
-`Connection` trait:
+By default, `rpcclient` only handles connection/host health issues,
+counting any RPC failure against that host. However, exceptions often
+are used for application errors or control flow and should not be
+taken to indicate a node failure. To modify the interpretation of
+exceptions, define `unwrapException` in the `Connection` trait:
 
     override def unwrapException = super.unwrapException orElse {
       // ``InvalidQueryException''s are innocuous.
       case _:thrift.InvalidQueryException => rpcclient.IgnoreError
     }
+
+Some applications also provide explicit health checking
+facilities. `rpcclient` supports these with the `ApplicationHealth`
+mixin for `Connection`. This mixin stubs a method
+`isApplicationHealthy` returning a `Boolean` indicating healthyness of
+the application. For example:
+
+    def createConnection =
+      new ThriftConnection[MyClient.Client](host, port, true/*framed*/)
+      with ApplicationHealth[MyClient.Client] {
+        override def SO_TIMEOUT = soTimeout
+        val applicationCheckInterval = 10.seconds
+   
+        def isApplicationHealthy():Boolean =
+          try {
+            client.is_healthy()
+          } catch {
+            case _: Exception => false
+          }
+      }
+
+will call `isApplicationHealthy` at most every 10 seconds (which in
+turn asks the application over the RPC interface).
+
+# Events
+
+`rpcclient` generates events for 
+
+- nodes becoming unhealthy
+- nodes becoming healthy (after being unhealthy)
+- nodes timing out
+
+Subscribe to these by defining `handleEvent`, eg:
+
+    class MyThriftClient extends PooledClient[MyClient.Iface] {
+      ...
+
+      override def handleEvent = {
+        case rpcclient.UnhealthyEvent(time) =>
+          log.warning("Index node %s became unhealthy at %s".format(hostport, time))
+        case rpcclient.HealthyEvent(time, unhealthyTime) =>
+          log.info("Index node %s became healthy after being unhealthy for %d seconds".format(
+            hostport, (time - unhealthyTime).inSeconds))
+        case rpcclient.TimeoutEvent(_) =>
+          log.warning("Timeout for index node %s".format(hostport))
+       }
+
+# Timing and statistics
+
+`rpcclient` maintains timings & counts for issued RPCs through the
+[ostrich](http://github.com/robey/ostrich) library. Counts & timings
+are maintained per RPC as well as per (RPC, host, port). Failure &
+timeout counts are also maintained. eg.:
+
+    rpcclient_index_hostport_localhost_4190_rpc_search: 
+      (average=4, count=71, maximum=111, minimum=1, p25=2, p50=2, 
+       p75=3, p90=6, p99=112, p999=112, p9999=112, standard_deviation=13)
+    rpcclient_index_rpc_search: 
+      (average=4, count=71, maximum=111, minimum=1, p25=2, p50=2, 
+       p75=3, p90=6, p99=112, p999=112, p9999=112, standard_deviation=13)
+
+Here 71 calls were made, all to `localhost:4190`. The average response
+time was 4ms and the response time distribution is given (90% of
+requests were satisfied within 6 milliseconds).
 
 # Building
 

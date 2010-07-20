@@ -89,7 +89,7 @@ multiple servers:
 This in turn has its own `proxy` member that dispatches the request to
 a round-robin client.
 
-The above behavior is encapsulated fully in `ThriftClient`, and is
+The above idiom is encapsulated fully in `ThriftClient`, and is
 equivalent the following. Here, we are instantiating the client before
 we started the server for the interface. Note that `is_healthy()` is a
 call that's defined in the thrift interface for `MyClient`.

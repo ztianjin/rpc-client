@@ -25,13 +25,12 @@ object PooledClientSpec extends Specification with Mockito {
     class TestClientConnection extends TestConnection {
       val clientName = _numConnections.getAndIncrement
 
-      // XXX val v. def here.
       override val client = new TestRpcClient {
         override def call = "client:%d".format(clientName)
       }
     }
 
-    var connections:List[TestClientConnection] = Nil
+    var connections: List[TestClientConnection] = Nil
     def numConnections = _numConnections.get
 
     def createConnection = synchronized {
@@ -150,7 +149,7 @@ object PooledClientSpec extends Specification with Mockito {
   "failure accrual" should {
     "mark a connection unhealthy and recover it in within the specified parameters" in {
       val conn = spy(new TestConnection)
-      var events:List[ClientEvent] = Nil
+      var events: List[ClientEvent] = Nil
       conn.unwrapException returns { case _ => TimeoutError }
 
       val client = new PooledClient[TestRpcClient] {
@@ -181,9 +180,9 @@ object PooledClientSpec extends Specification with Mockito {
       class IgnorableException extends Exception
 
       val conn = spy(new TestConnection)
-      var events:List[ClientEvent] = Nil
+      var events: List[ClientEvent] = Nil
       conn.unwrapException returns {
-        case _:IgnorableException =>
+        case _: IgnorableException =>
           IgnoreError
         case e =>
           UnknownError

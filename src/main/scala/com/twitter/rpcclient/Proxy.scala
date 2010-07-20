@@ -31,8 +31,7 @@ object Proxy {
         f(Invocation(method, args))
     }
 
-    val proxy = reflect.Proxy.newProxyInstance(
-      cls.getClassLoader, Array(cls), invocationHandler)
+    val proxy = reflect.Proxy.newProxyInstance(cls.getClassLoader, Array(cls), invocationHandler)
     proxy.asInstanceOf[T]
   }
 }

@@ -6,8 +6,8 @@ import java.util.concurrent.CyclicBarrier
 
 object Helpers {
   trait TestRpcClient {
-    def call:String = "hey"
-    def waitCall(barrier:CyclicBarrier) = {
+    def call: String = "hey"
+    def waitCall(barrier: CyclicBarrier) = {
       barrier.await()
       call
     }
@@ -15,7 +15,7 @@ object Helpers {
     // Java proxies are finicky about exceptions, so we need to
     // annotate.
     @throws(classOf[Exception])
-    def exceptionCall(e:Exception) {
+    def exceptionCall(e: Exception) {
       throw e
     }
   }

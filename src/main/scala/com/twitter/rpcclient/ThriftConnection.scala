@@ -16,15 +16,16 @@ import com.twitter.xrayspecs.TimeConversions._
 import com.twitter.xrayspecs.Duration
 
 class ThriftConnection[T](val host: String, val port: Int, framed: Boolean)
-(implicit manifest: Manifest[T]) extends Connection[T]
+(implicit manifest: Manifest[T])
+extends Connection[T]
 {
   def SO_TIMEOUT     = 5.seconds
   val socket         = new TSocket(host, port, SO_TIMEOUT.inMilliseconds.toInt)
   val transport      = if (framed) new TFramedTransport(socket) else socket
   val protocol       = new TBinaryProtocol(transport)
+  var didFailConnect = false
   val constructor    = manifest.erasure.getDeclaredConstructor(classOf[TProtocol])
   val client         = constructor.newInstance(protocol).asInstanceOf[T]
-  var didFailConnect = false
 
   def ensureOpen() {
     if (transport.isOpen)

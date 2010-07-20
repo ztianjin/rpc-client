@@ -6,7 +6,7 @@ it provides:
   - connection pooling
   - failure detection and health checking
   - channel abstractions
-  - logging and timing statistics
+  - logging and timing statistics (via ostrich)
 
 It also provides convenient wrappers for fully encapsulating thrift
 clients (though it is agnostic to the RPC mechanism).
@@ -88,6 +88,27 @@ multiple servers:
 
 This in turn has its own `proxy` member that dispatches the request to
 a round-robin client.
+
+The above behavior is encapsulated fully in `ThriftClient`, and is
+equivalent the following. Here, we are instantiating the client before
+we started the server for the interface. Note that `is_healthy()` is a
+call that's defined in the thrift interface for `MyClient`.
+
+    scala> val client = new ThriftClient[MyClient.Iface, MyClient.Client]("localhost", 4190)
+    client: com.twitter.rpcclient.ThriftClient[MyClient.Iface,MyClient.Client] = $anon$1@784425c
+
+    scala> client.proxy.is_healthy()
+    com.twitter.rpcclient.ClientUnavailableException
+        at com.twitter.rpcclient.PooledClient$$anonfun$1.apply(Client.scala:169)
+        at com.twitter.rpcclient.PooledClient$$anonfun$1.apply(Client.scala:166)
+        at com.twitter.rpcclient.Proxy$$anon$1.invoke(Proxy.scala:31)
+        at $Proxy0.toString(Unknown Source)
+        at scala.runtime.ScalaRunTime$.stringOf(ScalaRunTime.scala:165)
+        at RequestResult$.<init>...
+
+    scala> // Whoops. Start the server
+    scala> client.proxy.is_healthy()
+    res6: Boolean = true
 
 # Health checking and exception handling
 

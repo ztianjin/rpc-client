@@ -4,12 +4,13 @@ The `rpcclient` library encapsulates RPC communications. Specifically
 it provides:
 
   - connection pooling
-  - failure detection and health checking
-  - channel abstractions
+  - failure accrual management and health checking
+  - a channel abstraction
   - logging and timing statistics (via ostrich)
 
-It also provides convenient wrappers for fully encapsulating thrift
-clients (though it is agnostic to the RPC mechanism).
+We also provide convenient wrappers to fully encapsulate thrift
+clients (though the underlying mechanism and its API is agnostic to
+the RPC mechanism).
 
 # Overview
 
@@ -20,7 +21,7 @@ clients (though it is agnostic to the RPC mechanism).
       def isHealthy:Boolean
     }
 
-represents an interface to an abstract client and proxies the
+represents an interface to an abstract client which proxies the
 underlying RPC stub. The `Connection`
 
     trait Connection[+T] {
@@ -59,40 +60,11 @@ pools of `Connection`s. The `Client` is implemented entirely by
 
 # Usage
 
-A full example using [thrift](http://incubator.apache.org/thrift/):
-
-    import rpcclient.{Client, PooledClient, ThriftConnection, LoadBalancingChannel}
-
-    class MyThriftClient(host: String, port: Int, framed: Boolean, soTimeout: Duration)
-      extends PooledClient[MyClient.Iface]
-    {
-      val name = "myclient"
-
-      def createConnection =
-        new ThriftConnection[MyClient.Client](host, port, framed) {
-          override def SO_TIMEOUT = soTimeout
-        }
-    }
-
-Instantiating `MyThriftClient` now proxies `MyClient.Iface` through
-`proxy`:
-
-    val client = new MyThriftClient("localhost", 9090, true/*use framed transport*/, 10.seconds)
-    val result = client.proxy.someCall(x, y, z)
-
-Use the `LoadBalancingChannel` to establish a round-robin channel to
-multiple servers:
-
-    val client = new LoadBalancingChannel(
-      for (host <- hosts) yield new MyThriftClient(host, 9090, true, 10.seconds))
-
-This in turn has its own `proxy` member that dispatches the request to
-a round-robin client.
-
-The above idiom is encapsulated fully in `ThriftClient`, and is
-equivalent the following. Here, we are instantiating the client before
-we started the server for the interface. Note that `is_healthy()` is a
-call that's defined in the thrift interface for `MyClient`.
+A full example using [thrift](http://incubator.apache.org/thrift/).
+We are instantiate the client before starting the server we're
+connecting to. Note that `is_healthy()` is a call that's defined in
+the thrift interface for `MyClient`. `proxy` complies to
+`MyClient.Iface`.
 
     scala> val client = new ThriftClient[MyClient.Iface, MyClient.Client]("localhost", 4190)
     client: com.twitter.rpcclient.ThriftClient[MyClient.Iface,MyClient.Client] = $anon$1@784425c
@@ -109,6 +81,33 @@ call that's defined in the thrift interface for `MyClient`.
     scala> // Whoops. Start the server
     scala> client.proxy.is_healthy()
     res6: Boolean = true
+
+The above `ThriftClient` implements the following (and is provided
+mostly as a convenience).
+
+    import rpcclient.{Client, PooledClient, ThriftConnection, LoadBalancingChannel}
+
+    class MyThriftClient(host: String, port: Int, framed: Boolean, soTimeout: Duration)
+      extends PooledClient[MyClient.Iface]
+    {
+      val name = "myclient"
+
+      def createConnection =
+        new ThriftConnection[MyClient.Client](host, port, framed) {
+          override def SO_TIMEOUT = soTimeout
+        }
+    }
+
+Use the `LoadBalancingChannel` to establish a round-robin channel to
+multiple servers:
+
+    val client = new LoadBalancingChannel(
+      for (host <- hosts) yield new MyThriftClient(host, 9090, true, 10.seconds))
+
+This is a `Client[MyThriftClient]` and like any other it has a `proxy`
+member implementing the `MyClient.Iface` interface. Requests made
+through it are dispatched in a round-robin manner to the given
+(healthy subset of) clients.
 
 # Health checking and exception handling
 

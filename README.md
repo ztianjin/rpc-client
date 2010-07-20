@@ -83,7 +83,8 @@ Instantiating `MyThriftClient` now proxies `MyClient.Iface` through
 Use the `LoadBalancingChannel` to establish a round-robin channel to
 multiple servers:
 
-    val client = for (host <- hosts) new RockdoveThriftClient(host, 9090, true, 10.seconds)
+    val client = new LoadBalancingChannel(
+      for (host <- hosts) yield new MyThriftClient(host, 9090, true, 10.seconds))
 
 This in turn has its own `proxy` member that dispatches the request to
 a round-robin client.

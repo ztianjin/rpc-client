@@ -2,6 +2,7 @@ import sbt._
 import com.twitter.sbt._
 
 class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with SubversionRepository {
+  val twitterMavenRepo = "twitter.com" at "http://maven.twttr.com"
   val specs     = buildScalaVersion match {
     case "2.7.7" => "org.scala-tools.testing" % "specs" % "1.6.2.1"
     case _ => "org.scala-tools.testing" %% "specs" % "1.6.5"
@@ -13,7 +14,7 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "com.twitter" %% "xrayspecs" % "2.0"
   }
   val pool      = "commons-pool"            % "commons-pool" % "1.5.4"
-  val thrift    = "thrift"                  % "libthrift"    % "0.2.0"
+  val thrift    = "thrift"                  % "libthrift"    % "0.2.0-twitter-2"
   val ostrich = buildScalaVersion match {
     case "2.7.7" => "com.twitter" % "ostrich" % "1.1.14"
     case _ => "com.twitter" %% "ostrich" % "2.2.6"

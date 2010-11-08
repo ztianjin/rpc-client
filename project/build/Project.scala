@@ -14,10 +14,10 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "com.twitter" %% "xrayspecs" % "2.0"
   }
   val pool      = "commons-pool"            % "commons-pool" % "1.5.4"
-  val thrift    = "thrift"                  % "libthrift"    % "0.2.0-twitter-2"
+  val thrift    = "org.apache.thrift"       % "libthrift"    % "0.5.0"
   val ostrich = buildScalaVersion match {
-    case "2.7.7" => "com.twitter" % "ostrich" % "1.1.14"
-    case _ => "com.twitter" %% "ostrich" % "2.2.6"
+    case "2.7.7" => "com.twitter" % "ostrich" % "1.2.10"
+    case _ => "com.twitter" %% "ostrich" % "2.2.10"
   }
 
   override def disableCrossPaths = false

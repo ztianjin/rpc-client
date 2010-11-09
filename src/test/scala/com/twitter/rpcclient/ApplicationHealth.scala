@@ -9,8 +9,8 @@ import org.specs.mock.Mockito
 import org.mockito.Matchers._
 import org.mockito.Mock
 
-import com.twitter.xrayspecs.{Duration, Time}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Duration, Time}
+import com.twitter.util.TimeConversions._
 
 object ApplicationHealthSpec extends Specification with Mockito {
   import Helpers._

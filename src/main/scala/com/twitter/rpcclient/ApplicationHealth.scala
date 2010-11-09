@@ -4,8 +4,8 @@
 
 package com.twitter.rpcclient
 
-import com.twitter.xrayspecs.{Duration, Time}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Duration, Time}
+import com.twitter.util.TimeConversions._
 
 // A mixin to check application health at a given interval. Minimal
 // complete definition: ``isApplicationHealthy'' and

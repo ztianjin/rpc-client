@@ -15,8 +15,8 @@ import org.apache.commons.pool.PoolableObjectFactory
 import org.apache.commons.pool.impl.StackObjectPool
 
 import com.twitter.ostrich.Stats
-import com.twitter.xrayspecs.{Time, Duration}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Time, Duration}
+import com.twitter.util.TimeConversions._
 
 // Events that occur in individual clients. They may be observed.
 sealed abstract class ClientEvent

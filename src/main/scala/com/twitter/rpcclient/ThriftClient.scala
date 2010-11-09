@@ -8,8 +8,8 @@ import scala.reflect.Manifest
 
 import org.apache.thrift.protocol.TProtocol
 
-import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.TimeConversions._
+import com.twitter.util.Duration
 
 class ThriftClient[Intf <: AnyRef, Cli <: Intf]
 (host: String, port: Int, framed: Boolean, soTimeout: Duration, val name: String)

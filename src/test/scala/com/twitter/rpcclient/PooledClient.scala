@@ -12,8 +12,8 @@ import org.specs.mock.Mockito
 import org.mockito.Matchers._
 import org.mockito.Mock
 
-import com.twitter.xrayspecs.{Time, Duration}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Time, Duration}
+import com.twitter.util.TimeConversions._
 
 object PooledClientSpec extends Specification with Mockito {
   import Helpers._

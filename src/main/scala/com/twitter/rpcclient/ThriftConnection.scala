@@ -12,8 +12,8 @@ import org.apache.thrift.transport.{
   TFramedTransport, TSocket, TTransportException, TTransport}
 import org.apache.thrift.TException
 
-import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.TimeConversions._
+import com.twitter.util.Duration
 
 class ThriftConnection[T](val host: String, val port: Int, framed: Boolean)
 (implicit manifest: Manifest[T])

@@ -2,6 +2,8 @@ import sbt._
 import com.twitter.sbt._
 
 class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven")
+  
   val twitterMavenRepo = "twitter.com" at "http://maven.twttr.com"
   val specs     = "org.scala-tools.testing" % "specs_2.8.0" % "1.6.5"
   val mockito   = "org.mockito"             % "mockito-all"  % "1.8.5" % "test"

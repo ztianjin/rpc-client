@@ -14,7 +14,7 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "com.twitter" % "util" % "1.2"
   }
   val pool      = "commons-pool"            % "commons-pool" % "1.5.4"
-  val thrift    = "thrift"                  % "libthrift"    % "0.2.0-twitter-2"
+  val thrift    = "thrift"                  % "libthrift"    % "0.5.0"
   val ostrich = buildScalaVersion match {
     case "2.7.7" => "com.twitter" % "ostrich" % "1.2.10"
     case _ => "com.twitter" %% "ostrich" % "2.2.6"

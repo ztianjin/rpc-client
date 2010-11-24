@@ -7,3 +7,5 @@ TAGS
 *~
 project/plugins/project/
 project/plugins/src_managed/
+.idea
+*.iml

@@ -2,6 +2,8 @@ import sbt._
 import com.twitter.sbt._
 
 class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven")
+
   val twitterMavenRepo = "twitter.com" at "http://maven.twttr.com"
   val specs     = buildScalaVersion match {
     case "2.7.7" => "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test"
@@ -20,5 +22,6 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "com.twitter" %% "ostrich" % "2.2.6"
   }
 
-  override def disableCrossPaths = false
+  override def disableCrossPaths = true
+  override def managedStyle = ManagedStyle.Maven
 }

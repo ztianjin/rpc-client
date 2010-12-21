@@ -11,9 +11,10 @@ object LoadBalancingChannelSpec extends Specification with Mockito {
 
   val mockClient1 = mock[Client[TestRpcClient]]
   val mockClient2 = mock[Client[TestRpcClient]]
+  val mockClient3 = mock[Client[TestRpcClient]]
   def simpleLoadBalancer[T](clients: Seq[Client[T]]) = clients.first
 
-  val channel = new LoadBalancingChannel[TestRpcClient](Seq(mockClient1, mockClient2), simpleLoadBalancer)
+  val channel = new LoadBalancingChannel(Seq(mockClient1, mockClient2), simpleLoadBalancer, 3)
 
   class TestException extends RuntimeException
 
@@ -44,9 +45,9 @@ object LoadBalancingChannelSpec extends Specification with Mockito {
     }
 
     "pass an exception up" in {
-      val exceptionPassingChannel = new LoadBalancingChannel[TestRpcClient](Seq(mockClient1), simpleLoadBalancer) {
-        override def failoverClientException = {
-          case _: TestException => false
+      val exceptionPassingChannel = new LoadBalancingChannel(Seq(mockClient1), simpleLoadBalancer, 1) {
+        override def fatalClientExceptions = {
+          case _: TestException => true
         }
       }
 
@@ -54,6 +55,37 @@ object LoadBalancingChannelSpec extends Specification with Mockito {
       mockClient1.proxy returns new TestRpcClient { override def call = { throw new TestException } }
 
       exceptionPassingChannel.proxy.call must throwA[TestException]
+    }
+
+    "does not retry when retries is 0" in {
+      val noRetryChannel = new LoadBalancingChannel(Seq(mockClient1, mockClient2), simpleLoadBalancer, 0)
+
+      mockClient1.isHealthy returns true
+      mockClient1.proxy returns new TestRpcClient { override def call = { throw new TestException } }
+
+      noRetryChannel.proxy.call must throwA[TestException]
+    }
+
+    "retries a specified number of times" in {
+      val oneRetryChannel = new LoadBalancingChannel(Seq(mockClient1, mockClient2, mockClient3), simpleLoadBalancer, 1)
+
+      mockClient1.isHealthy returns true
+      mockClient1.proxy returns new TestRpcClient { override def call = { throw new TestException } }
+      mockClient2.isHealthy returns true
+      mockClient2.proxy returns new TestRpcClient { override def call = { throw new TestException } }
+
+      oneRetryChannel.proxy.call must throwA[TestException]
+    }
+
+    "only retries each host once" in {
+      val tooManyRetriesChannel = new LoadBalancingChannel(Seq(mockClient1, mockClient2), simpleLoadBalancer, 10)
+
+      mockClient1.isHealthy returns true
+      mockClient1.proxy returns new TestRpcClient { override def call = { throw new TestException } }
+      mockClient2.isHealthy returns true
+      mockClient2.proxy returns new TestRpcClient { override def call = { throw new TestException } }
+
+      tooManyRetriesChannel.proxy.call must throwA[ClientUnavailableException]
     }
   }
 }

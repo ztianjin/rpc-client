@@ -14,24 +14,40 @@ class RandomLoadBalancer[T <: AnyRef] extends (Seq[Client[T]] => Client[T]) {
   def apply(clients: Seq[Client[T]]) = clients(rng.nextInt(clients.size))
 }
 
+object LoadBalancingChannel {
+  val DEFAULT_RETRIES = 0
+}
+
+import LoadBalancingChannel._
+
 class LoadBalancingChannel[T <: AnyRef](
   underlying: Seq[Client[T]],
-  loadbalancer: (Seq[Client[T]] => Client[T]))
+  loadbalancer: Seq[Client[T]] => Client[T],
+  maxRetries: Int)
   (implicit manifest: Manifest[T])
 extends Client[T] {
+  def this(underlying: Seq[Client[T]], maxRetries: Int)(implicit manifest: Manifest[T]) =
+    this(underlying, new RandomLoadBalancer, maxRetries)
 
   def this(underlying: Seq[Client[T]])(implicit manifest: Manifest[T]) =
-    this(underlying, new RandomLoadBalancer)
+    this(underlying, new RandomLoadBalancer, DEFAULT_RETRIES)
 
   val underlyingA = underlying.toArray
 
-  def failoverClientException: PartialFunction[Exception, Boolean] = {
-    case _ => true
+  // override to indicate which client exceptions are fatal and
+  // should not be retried
+  def fatalClientExceptions: PartialFunction[Exception, Boolean] = {
+    case _ => false
+  }
+
+  protected def isFatalException(e: Exception) = {
+    fatalClientExceptions.isDefinedAt(e) && fatalClientExceptions(e)
   }
 
   def proxy = {
     Proxy[T](manifest.erasure) { invocation =>
       val attemptedServers = mutable.Set[Client[T]]()
+      var numRetries       = 0
 
       def failover: AnyRef = {
         val client = underlyingA.filter(_.isHealthy).filter(!attemptedServers.contains(_)) match {
@@ -40,18 +56,14 @@ extends Client[T] {
         }
 
         try { invocation(client.proxy) } catch { case e: Exception =>
-          val shouldFailover =
-            if (failoverClientException.isDefinedAt(e))
-              failoverClientException(e)
-            else
-              true
-
-          if (shouldFailover) {
+          if (numRetries < maxRetries && !isFatalException(e)) {
+            numRetries       += 1
             attemptedServers += client
             failover
           } else throw e
         }
       }
+
       failover
     }
   }

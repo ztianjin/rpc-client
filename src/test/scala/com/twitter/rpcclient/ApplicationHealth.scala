@@ -26,16 +26,17 @@ object ApplicationHealthSpec extends Specification with Mockito {
       val applicationCheckInterval = 10.seconds
     }
 
-    Time.freeze()
-    conn.isHealthy must beTrue          // this triggered a health check.
-    conn.numChecks must be_==(1)
+    Time.withCurrentTimeFrozen { time =>
+      conn.isHealthy must beTrue          // this triggered a health check.
+      conn.numChecks must be_==(1)
 
-    conn._isApplicationHealthy = false
-    conn.isHealthy must beTrue
-    conn.numChecks must be_==(1)    
+      conn._isApplicationHealthy = false
+      conn.isHealthy must beTrue
+      conn.numChecks must be_==(1)
 
-    Time.advance(11.seconds)
-    conn.isHealthy must beFalse
-    conn.numChecks must be_==(2)
+      time.advance(11.seconds)
+      conn.isHealthy must beFalse
+      conn.numChecks must be_==(2)
+    }
   }
 }

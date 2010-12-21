@@ -125,10 +125,11 @@ object PooledClientSpec extends Specification with Mockito {
           case e => events ::= e
         }
       }
-     
-      Time.freeze()
-      client.proxy.exceptionCall(new Exception("hey")) must throwA(new ClientTimedOutException)
-      events must haveTheSameElementsAs(List(TimeoutEvent(Time.now)))
+
+      Time.withCurrentTimeFrozen { time =>
+        client.proxy.exceptionCall(new Exception("hey")) must throwA(new ClientTimedOutException)
+        events must haveTheSameElementsAs(List(TimeoutEvent(Time.now)))
+      }
     }
 
     "not reuse an unhealthy node" in {
@@ -160,20 +161,21 @@ object PooledClientSpec extends Specification with Mockito {
         }
       }
 
-      Time.freeze()
-      client.proxy.exceptionCall(new Exception("wtf!")) must throwA(new ClientTimedOutException)
-      for (_ <- 0 until client.maxAllowableFailures) {
-        client.isHealthy must beTrue
+      Time.withCurrentTimeFrozen { time =>
         client.proxy.exceptionCall(new Exception("wtf!")) must throwA(new ClientTimedOutException)
+        for (_ <- 0 until client.maxAllowableFailures) {
+          client.isHealthy must beTrue
+          client.proxy.exceptionCall(new Exception("wtf!")) must throwA(new ClientTimedOutException)
+        }
+
+        client.isHealthy must beFalse
+
+        time.advance(client.retryInterval + 1.second)
+        client.isHealthy must beTrue
+        // And failure count is reset:
+        client.proxy.exceptionCall(new Exception("wtf!")) must throwA(new ClientTimedOutException)
+        client.isHealthy must beTrue
       }
-
-      client.isHealthy must beFalse
-
-      Time.advance(client.retryInterval + 1.second)
-      client.isHealthy must beTrue
-      // And failure count is reset:
-      client.proxy.exceptionCall(new Exception("wtf!")) must throwA(new ClientTimedOutException)
-      client.isHealthy must beTrue
     }
 
     "be unaffected by ignored errors, but mark unhealthy on unknown exceptions" in {
@@ -196,18 +198,19 @@ object PooledClientSpec extends Specification with Mockito {
         }
       }
 
-      Time.freeze()
-      for (_ <- 0 until client.maxAllowableFailures * 2) {
-        client.proxy.exceptionCall(new IgnorableException) must throwA(new IgnorableException)
-        client.isHealthy must beTrue
-        events must beEmpty
+      Time.withCurrentTimeFrozen { time =>
+        for (_ <- 0 until client.maxAllowableFailures * 2) {
+          client.proxy.exceptionCall(new IgnorableException) must throwA(new IgnorableException)
+          client.isHealthy must beTrue
+          events must beEmpty
+        }
+
+        for (_ <- 0 until client.maxAllowableFailures + 1)
+          client.proxy.exceptionCall(new Exception("hey")) must throwA(new Exception("hey"))
+
+        client.isHealthy must beFalse
+        events must be_==(List(UnhealthyEvent(Time.now)))
       }
-
-      for (_ <- 0 until client.maxAllowableFailures + 1)
-        client.proxy.exceptionCall(new Exception("hey")) must throwA(new Exception("hey"))
-
-      client.isHealthy must beFalse
-      events must be_==(List(UnhealthyEvent(Time.now)))
     }
   }
 }

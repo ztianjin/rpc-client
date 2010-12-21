@@ -12,8 +12,8 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
   val mockito   = "org.mockito"             % "mockito-all"  % "1.8.5" % "test"
   val vscaladoc = "org.scala-tools"         % "vscaladoc"    % "1.1-md-3"
   val util = buildScalaVersion match {
-    case "2.7.7" => "com.twitter" % "util" % "1.1.1"
-    case _ => "com.twitter" % "util" % "1.2"
+    case "2.7.7" => "com.twitter" % "util" % "1.1.2"
+    case _ => "com.twitter" % "util" % "1.2.8"
   }
   val pool      = "commons-pool"            % "commons-pool" % "1.5.4"
   val thrift    = "thrift"                  % "libthrift"    % "0.5.0"
@@ -22,6 +22,6 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "com.twitter" %% "ostrich" % "2.2.6"
   }
 
-  override def disableCrossPaths = true
+  override def disableCrossPaths = false
   override def managedStyle = ManagedStyle.Maven
 }

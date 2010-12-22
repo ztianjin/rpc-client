@@ -173,7 +173,7 @@ abstract class PooledClient[T <: AnyRef](implicit manifest: Manifest[T]) extends
       val (rv, msec) = Stats.duration(invocation(conn.client))
       Stats.addTiming("rpcclient_%s_rpc_%s".format(name, invocation.name), msec.toInt)
       Stats.addTiming(
-        "rpcclient_%s_hostport_%s_%d_rpc_%s".format(name, conn.host, conn.port, invocation.name),
+        "x-rpcclient_%s_hostport_%s_%d_rpc_%s".format(name, conn.host, conn.port, invocation.name),
         msec.toInt)
       rv
     } catch {

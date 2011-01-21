@@ -56,7 +56,7 @@ extends Connection[T]
     case e: TTransportException if e.getType == TTransportException.TIMED_OUT =>
       TimeoutError
     case e: TTransportException
-    if e.getCause.getClass == classOf[java.net.SocketTimeoutException] =>
+    if e.getCause != null && e.getCause.getClass == classOf[java.net.SocketTimeoutException] =>
       TimeoutError
   }
 

@@ -12,7 +12,7 @@ object LoadBalancingChannelSpec extends Specification with Mockito {
   val mockClient1 = mock[Client[TestRpcClient]]
   val mockClient2 = mock[Client[TestRpcClient]]
   val mockClient3 = mock[Client[TestRpcClient]]
-  def simpleLoadBalancer(clients: Seq[Client[TestRpcClient]]) = clients.first
+  def simpleLoadBalancer(clients: Seq[Client[TestRpcClient]]) = clients.head
 
   val channel = new LoadBalancingChannel(Seq(mockClient1, mockClient2), simpleLoadBalancer, 3)
 

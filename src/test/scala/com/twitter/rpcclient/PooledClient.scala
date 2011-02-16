@@ -44,32 +44,32 @@ object PooledClientSpec extends Specification with Mockito {
     "reuse connections" in {
       val client = new TestClient
       client.numConnections must be_==(0)
-     
+
       for (_ <- 0 until 100) {
         client.proxy.call must be_==("client:0")
         client.numConnections must be_==(1)
       }
-     
+
       client.poolSize must be_==(1)
       client.numConnections must be_==(1)
-      val conn = client.connections.first
+      val conn = client.connections.head
       conn.teardownCount must be_==(0)
       conn.flushCount must be_==(100)
     }
-     
+
     "allow simultaneous connections" in {
       val barrier = new CyclicBarrier(2)
       val client  = new TestClient
-     
+
       val call1 = future { client.proxy.waitCall(barrier) }
       val call2 = future { client.proxy.waitCall(barrier) }
-     
+
       val results = call1() :: call2() :: Nil
-     
+
       client.numConnections must be_==(2)
       results must haveTheSameElementsAs(List("client:0", "client:1"))
     }
-     
+
     "deal with an unhealthy node" in {
       val conn = mock[Connection[TestRpcClient]]
       conn.client returns (new TestRpcClient {})
@@ -79,38 +79,38 @@ object PooledClientSpec extends Specification with Mockito {
         val name = "test"
         def createConnection = conn
       }
-     
+
       client.proxy.call must throwA(new ClientUnavailableException)
     }
-     
+
     "propagate exceptions" in {
       val conn = mock[Connection[TestRpcClient]]
       conn.client returns (new TestRpcClient {})
       conn.isHealthy returns true
       conn.unwrapException returns { case _ => UnknownError }
-     
+
       val client = new PooledClient[TestRpcClient] {
         val name = "test"
         def createConnection = conn
       }
-     
+
       client.proxy.exceptionCall(new Exception("hey")) must throwA(new Exception("hey"))
     }
-     
+
     "throw timeout exceptions" in {
       val conn = mock[Connection[TestRpcClient]]
       conn.client returns (new TestRpcClient {})
       conn.isHealthy returns true
       conn.unwrapException returns { case _ => TimeoutError }
-     
+
       val client = new PooledClient[TestRpcClient] {
         val name = "test"
         def createConnection = conn
       }
-     
+
       client.proxy.exceptionCall(new Exception("hey")) must throwA(new ClientTimedOutException)
     }
-     
+
     "log events" in {
       val conn = mock[Connection[TestRpcClient]]
       var events:List[ClientEvent] = Nil

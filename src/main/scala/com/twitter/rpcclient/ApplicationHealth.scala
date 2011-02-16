@@ -18,13 +18,13 @@ trait ApplicationHealth[T] extends Connection[T] {
   def isApplicationHealthy(): Boolean
   val applicationCheckInterval: Duration
 
-  private var lastApplicationCheck = Time.never
+  private var lastApplicationCheck = Time.epoch
   private var wasApplicationHealthy = true
   override def isHealthy: Boolean = {
     if (!super.isHealthy)
       return false
 
-    if (lastApplicationCheck.ago > applicationCheckInterval) {
+    if (lastApplicationCheck.untilNow > applicationCheckInterval) {
       ensureOpen()
       lastApplicationCheck  = Time.now
       wasApplicationHealthy = isApplicationHealthy()

@@ -11,7 +11,7 @@ class RpcclientProject(info: ProjectInfo) extends StandardProject(info) with Sub
   val vscaladoc = "org.scala-tools"         % "vscaladoc"    % "1.1-md-3"
   val util = buildScalaVersion match {
     case "2.7.7" => "com.twitter" % "util" % "1.1.2"
-    case _       => "com.twitter" % "util" % "1.2.8"
+    case _       => "com.twitter" % "util" % "1.6.4"
   }
   val pool      = "commons-pool"            % "commons-pool" % "1.5.4"
   val thrift    = "thrift"                  % "libthrift"    % "0.5.0"
